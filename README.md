@@ -249,7 +249,11 @@ set the repository variable `PUBLISH_REPORT` to `true` to publish them.
 
 ## Hosted API
 
-`render.yaml` is a [Render](https://render.com) blueprint that hosts the API on the free plan, as a
+The API is online at <https://quote-api-qa-case.onrender.com>: try
+[`/api/health`](https://quote-api-qa-case.onrender.com/api/health) or
+[`/openapi.json`](https://quote-api-qa-case.onrender.com/openapi.json).
+
+`render.yaml` is a [Render](https://render.com) blueprint that hosts it on the free plan, as a
 showcase: the service sleeps after 15 minutes without requests, so the first answer can take about a
 minute. The acceptance suite does not depend on it. CI tests the API it starts itself, which is also
 the only place where the performance scenarios mean anything.
@@ -259,7 +263,7 @@ When the repository variable `HOSTED_API_URL` is set, the `Smoke on the hosted A
 from a terminal:
 
 ```bash
-QUOTE_API_BASE_URL=https://<service>.onrender.com QUOTE_API_AUTOSTART=false npm run test:smoke
+QUOTE_API_BASE_URL=https://quote-api-qa-case.onrender.com QUOTE_API_AUTOSTART=false npm run test:smoke
 ```
 
 ## Design decisions
