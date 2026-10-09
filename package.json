@@ -1,0 +1,39 @@
+{
+  "name": "quote-api-qa-case",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QA study case: a small Quote API with known defects and the BDD acceptance suite that finds them (Gherkin + Playwright API testing)",
+  "license": "MIT",
+  "scripts": {
+    "api": "tsx api/src/server.ts",
+    "contract:update": "tsx scripts/update-contract.ts",
+    "test": "bddgen && playwright test --project=api",
+    "test:all": "bddgen && playwright test",
+    "test:ui": "bddgen && playwright test --project=api --ui",
+    "test:smoke": "bddgen && playwright test --project=api --grep @smoke",
+    "test:contract": "bddgen && playwright test --project=api --grep @contract",
+    "test:regression": "bddgen && playwright test --project=api --grep @regression",
+    "test:negative": "bddgen && playwright test --project=api --grep @negative",
+    "test:performance": "bddgen && playwright test --project=api --grep @performance",
+    "test:security": "bddgen && playwright test --project=api --grep @security",
+    "test:known-bugs": "bddgen && playwright test --project=known-bugs",
+    "test:self-check": "bddgen && node scripts/self-check.mjs",
+    "report": "playwright show-report",
+    "docs:screenshots": "bddgen && node scripts/report-screenshots.mjs",
+    "typecheck": "bddgen && tsc --noEmit"
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.1",
+    "playwright-bdd": "9.2.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "zod": "4.6.5"
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}

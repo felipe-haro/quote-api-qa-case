@@ -1,0 +1,11 @@
+node_modules/
+.features-gen/
+test-results/
+playwright-report/
+cucumber-report/
+blob-report/
+results/
+.env
+.env.*
+!.env.example
+CLAUDE.local.md

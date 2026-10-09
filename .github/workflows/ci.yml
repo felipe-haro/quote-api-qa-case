@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # self-check, weekly
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # The gate (budget: 8 min). The whole suite runs in seconds, so it is not sharded or split by
+  # tag; split it into @smoke + @contract here when it outgrows the budget.
+  acceptance:
+    name: Acceptance suite
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: A single playwright-core version is installed
+        run: npm ls playwright-core
+      - run: npm run typecheck
+
+      - name: Blocking suite (must pass)
+        run: npm test
+        env:
+          CI: true
+
+      # Adds the scenarios of the criteria the API does not meet. They fail on purpose, so this
+      # step never fails the job; it only builds the complete reports.
+      - name: Complete reports (all scenarios)
+        if: ${{ !cancelled() }}
+        run: npm run test:all || true
+        env:
+          CI: true
+
+      - name: Collect the reports
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p site
+          cp -r playwright-report site/playwright
+          cp -r cucumber-report site/cucumber
+          cp .github/pages/index.html site/index.html
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: reports
+          path: site/
+          retention-days: 30
+      - uses: actions/upload-pages-artifact@v3
+        if: ${{ !cancelled() && github.ref == 'refs/heads/main' && vars.PUBLISH_REPORT == 'true' }}
+        with:
+          path: site/
+
+  # Optional: publishes the reports with GitHub Pages. Enable Pages (source: GitHub Actions) and
+  # set the repository variable PUBLISH_REPORT to "true".
+  publish:
+    name: Publish the reports
+    needs: acceptance
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && vars.PUBLISH_REPORT == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Optional: the smoke scenarios against the hosted API (render.yaml). Set the repository variable
+  # HOSTED_API_URL to its address. Never a gate: the hosted API is a showcase.
+  hosted-smoke:
+    name: Smoke on the hosted API
+    if: ${{ vars.HOSTED_API_URL != '' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # The free plan stops the service when idle: this is the readiness probe, as webServer is locally.
+      - name: Wait for the hosted API to wake up
+        run: curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-all-errors --max-time 30 "${{ vars.HOSTED_API_URL }}/api/health"
+      - run: npm run test:smoke
+        env:
+          CI: true
+          QUOTE_API_BASE_URL: ${{ vars.HOSTED_API_URL }}
+          QUOTE_API_AUTOSTART: false
+
+  # Test of the tests: every scenario must fail against a stub that answers nonsense.
+  self-check:
+    name: Suite self-check
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test:self-check

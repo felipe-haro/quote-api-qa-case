@@ -1,0 +1,14 @@
+# Render blueprint: hosts the Quote API as a showcase (free plan, sleeps after 15 min idle).
+# The acceptance suite does not depend on it: CI runs against the API it starts itself.
+services:
+  - type: web
+    name: quote-api-qa-case
+    runtime: node
+    plan: free
+    # tsx, which runs the API, is a dev dependency.
+    buildCommand: npm ci --include=dev
+    startCommand: npm run api
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22

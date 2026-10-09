@@ -1,0 +1,309 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Quote API (study case)",
+    "version": "1.0.0",
+    "description": "Creates price quotes. A small API with known defects, used to practise API test automation."
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "The service is up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/quotes": {
+      "post": {
+        "summary": "Create a quote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The quote was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is not valid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The body is larger than 1 MB.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The content type is not JSON.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "QuoteRequest": {
+        "type": "object",
+        "required": [
+          "customer",
+          "items"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "customer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/QuoteItem"
+            }
+          }
+        }
+      },
+      "QuoteItem": {
+        "type": "object",
+        "required": [
+          "item",
+          "quantity",
+          "unitPrice"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0,
+            "description": "Fraction of the gross amount: 0.10 means 10%."
+          }
+        }
+      },
+      "QuoteCreated": {
+        "type": "object",
+        "required": [
+          "quote",
+          "message"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "quote": {
+            "$ref": "#/components/schemas/Quote"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Quote": {
+        "type": "object",
+        "required": [
+          "id",
+          "customer",
+          "revision",
+          "status",
+          "lines",
+          "total"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/QuoteLine"
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      },
+      "QuoteLine": {
+        "type": "object",
+        "required": [
+          "item",
+          "quantity",
+          "unitPrice",
+          "discount",
+          "discountAmount",
+          "lineTotal"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "unitPrice": {
+            "type": "number",
+            "minimum": 0
+          },
+          "discount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0,
+            "description": "Fraction of the gross amount: 0.10 means 10%."
+          },
+          "discountAmount": {
+            "type": "number"
+          },
+          "lineTotal": {
+            "type": "number"
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "required": [
+          "status",
+          "time"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "up"
+            ]
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          }
+        }
+      },
+      "ValidationProblem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "errors"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "errors": {
+            "type": "object",
+            "description": "Messages by field path, for example \"items[0].quantity\".",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
