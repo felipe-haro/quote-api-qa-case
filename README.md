@@ -243,8 +243,9 @@ an 8 minute budget, then all 121 scenarios to build the complete reports, kept a
 self-check runs on a schedule. In CI one retry collects a trace, and a scenario that passes only on
 the retry fails the run (`failOnFlakyTests`).
 
-To publish the reports with GitHub Pages, enable Pages for the repository (source: GitHub Actions) and
-set the repository variable `PUBLISH_REPORT` to `true`.
+The reports of the last run on `main` are published at
+<https://felipe-haro.github.io/quote-api-qa-case/>. In a fork, enable Pages for the repository (source: GitHub Actions) and
+set the repository variable `PUBLISH_REPORT` to `true` to publish them.
 
 ## Hosted API
 
